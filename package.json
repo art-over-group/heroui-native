@@ -1,6 +1,6 @@
 {
   "name": "heroui-native",
-  "version": "1.0.9",
+  "version": "1.0.10",
   "description": "Beautiful, fast and modern React Native UI library",
   "main": "./lib/module/index.js",
   "types": "./lib/typescript/src/index.d.ts",
@@ -108,7 +108,7 @@
     "tailwind-variants": "^3.2.2",
     "tailwindcss": "^4.3.2",
     "typescript": "^5.8.3",
-    "uniwind": "^1.10.0"
+    "uniwind": "1.12.0"
   },
   "peerDependencies": {
     "@gorhom/bottom-sheet": "^5.2.9",
