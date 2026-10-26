@@ -3,11 +3,19 @@ import type {
   BottomSheetProps,
   BottomSheetBackgroundProps as GorhomBottomSheetBackgroundProps,
 } from '@gorhom/bottom-sheet';
-import { forwardRef, useMemo, type FC } from 'react';
+import {
+  forwardRef,
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+  type FC,
+} from 'react';
 import type { StyleProp, ViewStyle } from 'react-native';
-import { View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import type { SharedValue } from 'react-native-reanimated';
-import { ReduceMotion } from 'react-native-reanimated';
+import { ReduceMotion, useAnimatedReaction } from 'react-native-reanimated';
+import { scheduleOnRN } from 'react-native-worklets';
 import { withUniwind } from 'uniwind';
 import { useBottomSheetContentAnimation } from '../../../components/bottom-sheet/bottom-sheet.animation';
 import { DISPLAY_NAME as BOTTOM_SHEET_DISPLAY_NAME } from '../../../components/bottom-sheet/bottom-sheet.constants';
@@ -17,6 +25,7 @@ import GorhomBottomSheetPackage from '../../../optional/gorhom-bottom-sheet';
 import { BottomSheetIsDraggingProvider } from '../contexts';
 import { useBottomSheetGestureHandlers } from '../hooks';
 import { usePopupBottomSheetContentAnimation } from '../hooks/use-popup-bottom-sheet-content-animation';
+import type { ViewRef } from '../types';
 import type { BaseBottomSheetContentProps } from '../types/bottom-sheet';
 import { BottomSheetContentContainer } from './bottom-sheet-content-container';
 import { ThemeBackground } from './theme-background';
@@ -34,7 +43,7 @@ const StyledBottomSheet = withUniwind(GorhomBottomSheetPackage?.default);
  * default layer.
  */
 export const BottomSheetBackground = forwardRef<
-  View,
+  ViewRef,
   BottomSheetBackgroundProps
 >(({ className, ...props }, ref) => {
   const backgroundClassName = bottomSheetClassNames.background({ className });
@@ -152,6 +161,71 @@ export const BottomSheetContent = forwardRef<
     });
 
     /**
+     * The sheet stays mounted for its whole lifetime, so a dismissed one is
+     * still rendered — parked below the container. iOS resizes the container
+     * a few frames before React Native reports the new size, and in that gap
+     * the sheet is painted at the offset the previous size parked it at, which
+     * flashes it on screen mid-rotation. Taking a dismissed sheet out of the
+     * paint entirely closes that gap: it is only ever hidden while it is
+     * already meant to be invisible.
+     */
+    const [isDismissed, setIsDismissed] = useState(!isOpen);
+
+    useEffect(() => {
+      if (isOpen) {
+        setIsDismissed(false);
+      }
+    }, [isOpen]);
+
+    useAnimatedReaction(
+      () => progress.get(),
+      (value) => {
+        /**
+         * 0 and 2 are the two resting points of a closed sheet. Compare with
+         * a small epsilon: on Android a closed sheet can sit slightly above
+         * index `-1` when gorhom's initial `window.height` is shorter than
+         * the container, so progress never lands on exactly `0` or `2` and
+         * the peek would stay painted.
+         */
+        if (!isOpen && (value <= 0.01 || value >= 1.99)) {
+          scheduleOnRN(setIsDismissed, true);
+        }
+      }
+    );
+
+    /**
+     * Reveal the sheet only when our open state says it should be seen.
+     * Gorhom can fire `onAnimate` to a snap index `>= 0` on its own — dynamic
+     * sizing and the `window` vs container height mismatch both do this while
+     * `isOpen` is still `false` — and treating that as a real open would
+     * un-hide a closed sheet so its handle peeks at the bottom of the screen.
+     */
+    const onAnimate = restProps.onAnimate;
+    const handleAnimate = useCallback(
+      (
+        fromIndex: number,
+        toIndex: number,
+        fromPosition: number,
+        toPosition: number
+      ) => {
+        if (toIndex >= 0 && isOpen) {
+          setIsDismissed(false);
+        }
+
+        onAnimate?.(fromIndex, toIndex, fromPosition, toPosition);
+      },
+      [isOpen, onAnimate]
+    );
+
+    const containerStyle = useMemo(
+      () => [
+        restProps.containerStyle,
+        isDismissed && !isOpen && styles.dismissedContainer,
+      ],
+      [restProps.containerStyle, isDismissed, isOpen]
+    );
+
+    /**
      * Theme-aware background layer support: render the default background
      * component unless the caller provides their own `backgroundComponent`.
      * An explicit `null` is preserved — gorhom treats it as "render no
@@ -205,6 +279,8 @@ export const BottomSheetContent = forwardRef<
           gestureEventsHandlersHook={useBottomSheetGestureHandlers}
           {...restProps}
           backgroundComponent={backgroundComponent}
+          containerStyle={containerStyle}
+          onAnimate={handleAnimate}
         >
           <BottomSheetContentContainer
             initialIndex={initialIndex ?? 0}
@@ -227,3 +303,10 @@ export const BottomSheetContent = forwardRef<
 );
 
 BottomSheetContent.displayName = 'HeroUINative.BottomSheetContent';
+
+const styles = StyleSheet.create({
+  dismissedContainer: {
+    opacity: 0,
+    pointerEvents: 'none',
+  },
+});

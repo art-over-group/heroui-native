@@ -23,6 +23,7 @@ import {
   SpaceGrotesk_600SemiBold,
   SpaceGrotesk_700Bold,
 } from '@expo-google-fonts/space-grotesk';
+import '../layer-test/dump'; // TEMPORARY: layer-test harness, do not commit
 // Must be imported before any other i18n module so `Intl` is patched in time.
 import '../i18n/polyfills';
 
@@ -136,7 +137,7 @@ export default function Layout() {
 
   return (
     <GestureHandlerRootView style={styles.root}>
-      <KeyboardProvider>
+      <KeyboardProvider statusBarTranslucent navigationBarTranslucent>
         <AppLocaleProvider>
           <AppContent />
         </AppLocaleProvider>
