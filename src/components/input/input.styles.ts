@@ -30,11 +30,11 @@ const background = tv({
  * explicitly aligned to the trailing side in RTL layouts.
  */
 const input = tv({
-  base: 'input__input ios:outline-2 ios:outline-transparent ios:focus:outline-accent android:border-[1.5px] android:border-transparent android:focus:border-accent rtl:text-right',
+  base: 'input__input ios:outline ios:outline-transparent ios:focus:outline-accent android:border-[1.5px] android:border-transparent android:focus:border-accent rtl:text-right',
   variants: {
     variant: {
       primary:
-        'input__input--variant-primary ios:shadow-field android:shadow-sm',
+        'input__input--variant-primary ios:shadow-field android:[elevation:1]',
       secondary: 'input__input--variant-secondary',
     },
     isInvalid: {

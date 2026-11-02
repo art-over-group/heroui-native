@@ -1,16 +1,12 @@
 import { forwardRef, useLayoutEffect, useMemo, useState } from 'react';
-import {
-  type GestureResponderEvent,
-  type TextInput as TextInputType,
-  View,
-} from 'react-native';
+import { type GestureResponderEvent, View } from 'react-native';
 import { useThemeColor } from '../../helpers/external/hooks';
 import { CloseIcon } from '../../helpers/internal/components';
 import {
   AnimationSettingsProvider,
   FormFieldProvider,
 } from '../../helpers/internal/contexts';
-import type { ViewRef } from '../../helpers/internal/types';
+import type { TextInputComponent, ViewRef } from '../../helpers/internal/types';
 import { createContext } from '../../helpers/internal/utils';
 import { Button } from '../button';
 import { Input } from '../input';
@@ -149,7 +145,7 @@ const SearchFieldGroup = forwardRef<ViewRef, SearchFieldGroupProps>(
 
 // --------------------------------------------------
 
-const SearchFieldSearchIcon = forwardRef<View, SearchFieldSearchIconProps>(
+const SearchFieldSearchIcon = forwardRef<ViewRef, SearchFieldSearchIconProps>(
   (props, ref) => {
     const { children, className, iconProps, ...restProps } = props;
 
@@ -177,7 +173,7 @@ const SearchFieldSearchIcon = forwardRef<View, SearchFieldSearchIconProps>(
 
 // --------------------------------------------------
 
-const SearchFieldInput = forwardRef<TextInputType, SearchFieldInputProps>(
+const SearchFieldInput: TextInputComponent<SearchFieldInputProps> = forwardRef(
   (props, ref) => {
     const {
       className,
@@ -221,7 +217,7 @@ const SearchFieldInput = forwardRef<TextInputType, SearchFieldInputProps>(
 
 // --------------------------------------------------
 
-const SearchFieldClearButton = forwardRef<View, SearchFieldClearButtonProps>(
+const SearchFieldClearButton = forwardRef<ViewRef, SearchFieldClearButtonProps>(
   (props, ref) => {
     const { iconProps, className, children, onPress, ...restProps } = props;
 

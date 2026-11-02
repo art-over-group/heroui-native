@@ -1,5 +1,5 @@
 import { forwardRef } from 'react';
-import { View, type TextInput as TextInputType } from 'react-native';
+import { View } from 'react-native';
 import { useIsOnSurface } from '../../helpers/external/hooks';
 import { cn } from '../../helpers/external/utils';
 import {
@@ -8,9 +8,10 @@ import {
   useHasDefaultThemeBackground,
 } from '../../helpers/internal/components';
 import { useFormField } from '../../helpers/internal/contexts';
+import type { TextInputComponent, ViewRef } from '../../helpers/internal/types';
 import { DISPLAY_NAME } from './input.constants';
 import { inputClassNames, inputStyleSheet } from './input.styles';
-import type { InputBackgroundProps, InputProps } from './input.types';
+import type { InputBackgroundProps, InputProps, InputRef } from './input.types';
 
 // --------------------------------------------------
 
@@ -21,7 +22,7 @@ import type { InputBackgroundProps, InputProps } from './input.types';
  * nothing. Pass `children` to host arbitrary content (gradients, images)
  * with the container's positioning and clipping applied.
  */
-const InputBackground = forwardRef<View, InputBackgroundProps>(
+const InputBackground = forwardRef<ViewRef, InputBackgroundProps>(
   ({ className, fallbackColor = 'field', ...props }, ref) => {
     const backgroundClassName = inputClassNames.background({ className });
 
@@ -38,7 +39,10 @@ const InputBackground = forwardRef<View, InputBackgroundProps>(
 
 // --------------------------------------------------
 
-const InputRoot = forwardRef<TextInputType, InputProps>((props, ref) => {
+const InputRoot: TextInputComponent<InputProps> = forwardRef<
+  InputRef,
+  InputProps
+>((props, ref) => {
   const {
     isInvalid: localIsInvalid,
     isDisabled: localIsDisabled,
